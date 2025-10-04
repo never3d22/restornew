@@ -303,6 +303,7 @@ export const appRouter = router({
       return ctx.db.query.orders.findMany({
         with: {
           customer: true,
+          address: true,
           items: {
             with: { dish: true }
           }
