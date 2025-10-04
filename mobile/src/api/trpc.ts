@@ -3,6 +3,7 @@ import { httpBatchLink } from "@trpc/client";
 import SuperJSON from "superjson";
 import type { AppRouter } from "../../backend/src/trpc/router";
 import { useAuthStore } from "@/store/auth";
+import { useAdminStore } from "@/store/admin";
 
 export const trpc = createTRPCReact<AppRouter>();
 
@@ -15,14 +16,15 @@ export const trpcClient = trpc.createClient({
       url: apiUrl,
       headers() {
         const { customerId } = useAuthStore.getState();
+        const { adminSecret } = useAdminStore.getState();
         const headers: Record<string, string> = {
           "content-type": "application/json"
         };
         if (customerId) {
           headers["x-customer-id"] = String(customerId);
         }
-        if (process.env.EXPO_PUBLIC_ADMIN_SECRET) {
-          headers["x-admin-secret"] = process.env.EXPO_PUBLIC_ADMIN_SECRET;
+        if (adminSecret) {
+          headers["x-admin-secret"] = adminSecret;
         }
         return headers;
       }

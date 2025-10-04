@@ -1,4 +1,4 @@
-import { desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import {
   router,
@@ -170,32 +170,56 @@ export const appRouter = router({
           return sum + Number(dish.price) * item.quantity;
         }, 0);
 
-        const orderResult = (await ctx.db
-          .insert(orders)
-          .values({
-            customerId: ctx.customerId!,
-            addressId: input.addressId,
-            total: total.toFixed(2),
-            status: "pending"
-          })
-          .execute()) as InsertResult;
+        const { orderId } = await ctx.db.transaction(async (tx) => {
+          if (input.addressId) {
+            const address = await tx
+              .select({ id: addresses.id })
+              .from(addresses)
+              .where(
+                and(
+                  eq(addresses.id, input.addressId),
+                  eq(addresses.customerId, ctx.customerId!)
+                )
+              );
 
-        const orderId = getInsertId(orderResult);
+            if (address.length === 0) {
+              throw new Error("Адрес не найден или не принадлежит вам");
+            }
+          }
 
-        await ctx.db
-          .insert(orderItems)
-          .values(
-            input.items.map((item) => {
-              const dish = dbDishes.find((d) => d.id === item.dishId)!;
-              return {
-                orderId,
-                dishId: dish.id,
-                quantity: item.quantity,
-                price: dish.price
-              };
+          const orderResult = (await tx
+            .insert(orders)
+            .values({
+              customerId: ctx.customerId!,
+              addressId: input.addressId,
+              total: total.toFixed(2),
+              status: "pending"
             })
-          )
-          .execute();
+            .execute()) as InsertResult;
+
+          const createdOrderId = getInsertId(orderResult);
+
+          if (!createdOrderId) {
+            throw new Error("Не удалось создать заказ");
+          }
+
+          await tx
+            .insert(orderItems)
+            .values(
+              input.items.map((item) => {
+                const dish = dbDishes.find((d) => d.id === item.dishId)!;
+                return {
+                  orderId: createdOrderId,
+                  dishId: dish.id,
+                  quantity: item.quantity,
+                  price: dish.price
+                };
+              })
+            )
+            .execute();
+
+          return { orderId: createdOrderId };
+        });
 
         return { orderId, total };
       }),

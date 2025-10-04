@@ -1,23 +1,29 @@
 import { useState } from "react";
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, RefreshControl, Alert } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  RefreshControl,
+  Alert,
+  TextInput
+} from "react-native";
 import { trpc } from "@/api/trpc";
+import { useAdminStore } from "@/store/admin";
 
 const STATUSES = ["pending", "confirmed", "delivered", "cancelled"] as const;
 
 type Status = (typeof STATUSES)[number];
 
 export function AdminOrdersScreen() {
-  const [adminSecret] = useState<string | undefined>(process.env.EXPO_PUBLIC_ADMIN_SECRET);
+  const adminSecret = useAdminStore((state) => state.adminSecret);
+  const setAdminSecret = useAdminStore((state) => state.setAdminSecret);
+  const clearAdminSecret = useAdminStore((state) => state.clearAdminSecret);
+  const [secretInput, setSecretInput] = useState(adminSecret ?? "");
 
   const { data, isLoading, refetch } = trpc.admin.orders.useQuery(undefined, {
-    enabled: Boolean(adminSecret),
-    trpc: {
-      context: {
-        headers: {
-          "x-admin-secret": adminSecret ?? ""
-        }
-      }
-    }
+    enabled: Boolean(adminSecret)
   });
 
   const mutation = trpc.admin.updateOrderStatus.useMutation({
@@ -26,19 +32,12 @@ export function AdminOrdersScreen() {
 
   const updateStatus = (orderId: number, status: Status) => {
     if (!adminSecret) {
-      Alert.alert("Нет доступа", "Укажите EXPO_PUBLIC_ADMIN_SECRET");
+      Alert.alert("Нет доступа", "Введите секрет администратора");
       return;
     }
     mutation.mutate(
       { orderId, status },
       {
-        trpc: {
-          context: {
-            headers: {
-              "x-admin-secret": adminSecret
-            }
-          }
-        },
         onSuccess: () => Alert.alert("Успех", "Статус заказа обновлен"),
         onError: (error) => Alert.alert("Ошибка", error.message)
       }
@@ -49,8 +48,23 @@ export function AdminOrdersScreen() {
     return (
       <View style={styles.center}>
         <Text style={styles.helper}>
-          Укажите секрет администратора через переменную окружения EXPO_PUBLIC_ADMIN_SECRET.
+          Введите секрет администратора, чтобы просматривать и обновлять заказы.
         </Text>
+        <TextInput
+          value={secretInput}
+          onChangeText={setSecretInput}
+          placeholder="Админский секрет"
+          placeholderTextColor="#999"
+          secureTextEntry
+          autoCapitalize="none"
+          style={styles.input}
+        />
+        <TouchableOpacity
+          style={[styles.statusButton, styles.primaryButton]}
+          onPress={() => setAdminSecret(secretInput)}
+        >
+          <Text style={[styles.statusText, styles.primaryButtonText]}>Сохранить</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -61,6 +75,19 @@ export function AdminOrdersScreen() {
       keyExtractor={(item) => `${item.id}`}
       refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} />}
       contentContainerStyle={styles.list}
+      ListHeaderComponent={
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.changeSecret}
+            onPress={() => {
+              clearAdminSecret();
+              setSecretInput("");
+            }}
+          >
+            <Text style={styles.changeSecretText}>Сменить секрет</Text>
+          </TouchableOpacity>
+        </View>
+      }
       renderItem={({ item }) => (
         <View style={styles.card}>
           <Text style={styles.title}>Заказ #{item.id}</Text>
@@ -110,10 +137,28 @@ const styles = StyleSheet.create({
   },
   helper: {
     textAlign: "center",
-    color: "#666"
+    color: "#666",
+    marginBottom: 16
+  },
+  input: {
+    width: "100%",
+    maxWidth: 320,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: "#333",
+    marginTop: 12,
+    marginBottom: 16
   },
   list: {
     padding: 16
+  },
+  header: {
+    width: "100%",
+    alignItems: "flex-end",
+    marginBottom: 12
   },
   card: {
     backgroundColor: "#fff",
@@ -124,6 +169,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2
+  },
+  changeSecret: {
+    alignSelf: "flex-end"
+  },
+  changeSecretText: {
+    color: "#ff7043",
+    marginBottom: 8
   },
   title: {
     fontSize: 18,
@@ -155,6 +207,13 @@ const styles = StyleSheet.create({
   statusButtonActive: {
     backgroundColor: "#ff7043",
     borderColor: "#ff7043"
+  },
+  primaryButton: {
+    backgroundColor: "#ff7043",
+    borderColor: "#ff7043"
+  },
+  primaryButtonText: {
+    color: "#fff"
   },
   statusText: {
     color: "#555",
