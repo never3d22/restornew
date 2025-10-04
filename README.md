@@ -45,9 +45,10 @@ mobile/   — Expo-приложение (iOS, Android, Web) для клиент�
 3. Скопируйте `.env.example` в `.env` в каждом пакете и пропишите значения:
    - `backend/.env`
      ```env
-    DATABASE_URL=mysql://restornew:restornew-password@127.0.0.1:3306/restornew
-     ADMIN_SECRET=super-secret
-     ```
+   DATABASE_URL=mysql://restornew:restornew-password@127.0.0.1:3306/restornew
+    ADMIN_SECRET=super-secret
+    PORT=3000
+    ```
    - `mobile/.env`
      ```env
      EXPO_PUBLIC_API_URL=http://185.207.0.192:3000/trpc
@@ -63,8 +64,9 @@ mobile/   — Expo-приложение (iOS, Android, Web) для клиент�
 5. Запустите API:
    ```bash
    npm run dev
-   # API доступно на http://localhost:3000, tRPC на /trpc
+   # API доступно на http://localhost:3000 (порт настраивается переменной PORT), tRPC на /trpc
    ```
+   Приложение слушает на `0.0.0.0`, поэтому при развёртывании убедитесь, что порт `3000` открыт в фаерволе.
 6. Запустите Expo-приложение в другом терминале:
    ```bash
    cd mobile

@@ -14,6 +14,7 @@
     "@hono/trpc-server": "^0.1.3",
     "@trpc/client": "^11.0.0-rc.487",
     "@trpc/server": "^11.0.0-rc.487",
+    "dotenv": "^16.4.5",
     "drizzle-orm": "^0.30.7",
     "hono": "^4.4.7",
     "mysql2": "^3.9.1",

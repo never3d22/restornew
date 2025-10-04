@@ -1,4 +1,4 @@
-import { createDb } from "./index";
+import { createDb, closeDb } from "./index";
 import { addresses, categories, dishes, orderItems, orders } from "./schema";
 
 const seedCategories = [
@@ -57,11 +57,16 @@ async function seed() {
     )
     .execute();
 
-  console.log("Database seeded");
-  process.exit(0);
 }
 
-seed().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+seed()
+  .then(async () => {
+    console.log("Database seeded");
+    await closeDb();
+    process.exit(0);
+  })
+  .catch(async (error) => {
+    console.error(error);
+    await closeDb();
+    process.exit(1);
+  });

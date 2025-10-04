@@ -3,6 +3,7 @@ import { serve } from "@hono/node-server";
 import { trpcServer } from "@hono/trpc-server";
 import { appRouter } from "./trpc/router";
 import { createContext } from "./trpc/context";
+import { env } from "./env";
 
 const app = new Hono();
 
@@ -17,12 +18,13 @@ app.use(
   })
 );
 
-const port = Number(process.env.PORT ?? 3000);
+const port = env.PORT;
 
 if (import.meta.main) {
   serve({
     fetch: app.fetch,
-    port
+    port,
+    hostname: "0.0.0.0"
   });
   console.log(`API running on http://localhost:${port}`);
 }

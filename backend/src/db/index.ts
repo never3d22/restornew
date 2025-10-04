@@ -2,23 +2,37 @@ import mysql from "mysql2/promise";
 import { drizzle } from "drizzle-orm/mysql2";
 import type { MySql2Database } from "drizzle-orm/mysql2";
 import * as schema from "./schema";
-
-const DEFAULT_URL = "mysql://user:password@localhost:3306/restornew";
+import { env } from "../env";
 
 export type Database = MySql2Database<typeof schema>;
 
-let dbPromise: Promise<Database> | null = null;
+let pool: mysql.Pool | null = null;
+let db: Database | null = null;
 
-async function initDb(url: string) {
-  const connection = await mysql.createConnection(url);
-  return drizzle(connection, { schema });
+function initPool(url: string) {
+  if (!pool) {
+    pool = mysql.createPool({
+      uri: url,
+      waitForConnections: true,
+      connectionLimit: 10
+    });
+  }
+  if (!db) {
+    db = drizzle(pool, { schema });
+  }
+  return db;
 }
 
-export async function createDb(url = process.env.DATABASE_URL ?? DEFAULT_URL) {
-  if (!dbPromise) {
-    dbPromise = initDb(url);
+export async function createDb(url = env.DATABASE_URL) {
+  return initPool(url);
+}
+
+export async function closeDb() {
+  if (pool) {
+    await pool.end();
+    pool = null;
+    db = null;
   }
-  return dbPromise;
 }
 
 export * from "./schema";

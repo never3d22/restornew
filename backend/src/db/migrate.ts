@@ -1,6 +1,5 @@
 import mysql from "mysql2/promise";
-
-const DEFAULT_URL = process.env.DATABASE_URL ?? "mysql://user:password@localhost:3306/restornew";
+import { env } from "../env";
 
 const statements = [
   `CREATE TABLE IF NOT EXISTS categories (
@@ -57,7 +56,7 @@ const statements = [
 ];
 
 async function migrate() {
-  const connection = await mysql.createConnection(DEFAULT_URL);
+  const connection = await mysql.createConnection(env.DATABASE_URL);
   for (const statement of statements) {
     await connection.execute(statement);
   }

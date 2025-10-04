@@ -2,6 +2,7 @@ import type { Context } from "hono";
 import { initTRPC } from "@trpc/server";
 import SuperJSON from "superjson";
 import { createDb } from "../db";
+import { env } from "../env";
 
 export type AppContext = {
   db: Awaited<ReturnType<typeof createDb>>;
@@ -14,10 +15,15 @@ export async function createContext(c: Context): Promise<AppContext> {
   const authHeader = c.req.header("x-customer-id");
   const adminHeader = c.req.header("x-admin-secret");
 
+  const parsedCustomerId = authHeader ? Number.parseInt(authHeader, 10) : undefined;
+
   return {
     db,
-    customerId: authHeader ? Number(authHeader) : undefined,
-    isAdmin: adminHeader === process.env.ADMIN_SECRET
+    customerId:
+      typeof parsedCustomerId === "number" && Number.isFinite(parsedCustomerId)
+        ? parsedCustomerId
+        : undefined,
+    isAdmin: Boolean(env.ADMIN_SECRET) && adminHeader === env.ADMIN_SECRET
   };
 }
 
