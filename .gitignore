@@ -2,6 +2,7 @@ node_modules/
 .env
 backend/.env
 mobile/.env
+web/.env
 backend/dist/
 backend/drizzle/
 mobile/.expo/
