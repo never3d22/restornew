@@ -5,6 +5,11 @@ mobile/.env
 web/.env
 backend/dist/
 backend/drizzle/
+web/dist/
+web/tsconfig.tsbuildinfo
+web/tsconfig.node.tsbuildinfo
+web/vite.config.js
+web/vite.config.d.ts
 mobile/.expo/
 mobile/.expo-shared/
 .DS_Store

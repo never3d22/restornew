@@ -10,10 +10,10 @@ export const trpc = createTRPCReact<AppRouter>();
 export const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3000/trpc";
 
 export const trpcClient = trpc.createClient({
-  transformer: SuperJSON,
   links: [
     httpBatchLink({
       url: apiUrl,
+      transformer: SuperJSON,
       headers() {
         const { customerId } = useAuthStore.getState();
         const { adminSecret } = useAdminStore.getState();
