@@ -1,5 +1,5 @@
-import type { Context } from "hono";
 import { initTRPC } from "@trpc/server";
+import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 import SuperJSON from "superjson";
 import { createDb } from "../db";
 import { env } from "../env";
@@ -10,10 +10,10 @@ export type AppContext = {
   isAdmin: boolean;
 };
 
-export async function createContext(c: Context): Promise<AppContext> {
+export async function createContext({ req }: FetchCreateContextFnOptions): Promise<AppContext> {
   const db = await createDb();
-  const authHeader = c.req.header("x-customer-id");
-  const adminHeader = c.req.header("x-admin-secret");
+  const authHeader = req.headers.get("x-customer-id");
+  const adminHeader = req.headers.get("x-admin-secret");
 
   const parsedCustomerId = authHeader ? Number.parseInt(authHeader, 10) : undefined;
 

@@ -18,7 +18,7 @@ function initPool(url: string) {
     });
   }
   if (!db) {
-    db = drizzle(pool, { schema });
+    db = drizzle(pool, { schema, mode: "default" });
   }
   return db;
 }

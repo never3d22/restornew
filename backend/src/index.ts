@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { serve } from "@hono/node-server";
 import { trpcServer } from "@hono/trpc-server";
+import { fileURLToPath } from "node:url";
 import { appRouter } from "./trpc/router";
 import { createContext } from "./trpc/context";
 import { env } from "./env";
@@ -63,8 +64,9 @@ app.use(
 );
 
 const port = env.PORT;
+const isMain = typeof process !== "undefined" && process.argv[1] === fileURLToPath(import.meta.url);
 
-if (import.meta.main) {
+if (isMain) {
   serve({
     fetch: app.fetch,
     port,
