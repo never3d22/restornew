@@ -15,6 +15,26 @@ import {
   orderItems
 } from "../db";
 
+type InsertResult = { insertId?: number | bigint | string };
+
+const getInsertId = (result: InsertResult | null | undefined) => {
+  const value = result?.insertId;
+  if (typeof value === "bigint") {
+    return Number(value);
+  }
+
+  if (typeof value === "number") {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }
+
+  return Number(value ?? 0);
+};
+
 export const appRouter = router({
   menu: router({
     list: publicProcedure.query(async ({ ctx }) => {
@@ -55,12 +75,12 @@ export const appRouter = router({
           return { customerId: existing[0].id };
         }
 
-        const result = await ctx.db
+        const result = (await ctx.db
           .insert(customers)
           .values({ phone: input.phone })
-          .execute();
+          .execute()) as InsertResult;
 
-        const customerId = Number(result.insertId);
+        const customerId = getInsertId(result);
         return { customerId };
       })
   }),
@@ -82,15 +102,15 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const result = await ctx.db
+        const result = (await ctx.db
           .insert(addresses)
           .values({
             customerId: ctx.customerId!,
             ...input
           })
-          .execute();
+          .execute()) as InsertResult;
 
-        return { id: Number(result.insertId), ...input };
+        return { id: getInsertId(result), ...input };
       })
   }),
   cart: router({
@@ -150,7 +170,7 @@ export const appRouter = router({
           return sum + Number(dish.price) * item.quantity;
         }, 0);
 
-        const orderResult = await ctx.db
+        const orderResult = (await ctx.db
           .insert(orders)
           .values({
             customerId: ctx.customerId!,
@@ -158,9 +178,9 @@ export const appRouter = router({
             total: total.toFixed(2),
             status: "pending"
           })
-          .execute();
+          .execute()) as InsertResult;
 
-        const orderId = Number(orderResult.insertId);
+        const orderId = getInsertId(orderResult);
 
         await ctx.db
           .insert(orderItems)
@@ -199,7 +219,7 @@ export const appRouter = router({
       .input(z.object({ name: z.string().min(2), description: z.string().optional() }))
       .mutation(async ({ ctx, input }) => {
         const result = await ctx.db.insert(categories).values(input).execute();
-        return { id: Number(result.insertId), ...input };
+        return { id: getInsertId(result), ...input };
       }),
     dishes: adminProcedure
       .input(
@@ -221,7 +241,7 @@ export const appRouter = router({
           })
           .execute();
 
-        return { id: Number(result.insertId) };
+        return { id: getInsertId(result) };
       }),
     updateDish: adminProcedure
       .input(

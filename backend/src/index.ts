@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { serve } from "@hono/node-server";
-import { trpcServer } from "@hono/trpc-server";
+import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { fileURLToPath } from "node:url";
 import { appRouter } from "./trpc/router";
 import { createContext } from "./trpc/context";
@@ -55,13 +55,14 @@ app.get("/", (c) => {
 });
 app.get("/health", (c) => c.text("healthy"));
 
-app.use(
-  "/trpc/*",
-  trpcServer({
+app.all("/trpc/*", (c) => {
+  return fetchRequestHandler({
+    endpoint: "/trpc",
+    req: c.req.raw,
     router: appRouter,
     createContext
-  })
-);
+  });
+});
 
 const port = env.PORT;
 const isMain = typeof process !== "undefined" && process.argv[1] === fileURLToPath(import.meta.url);

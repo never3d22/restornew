@@ -33,11 +33,12 @@ mobile/   — Expo-приложение (iOS, Android, Web) для клиент�
    Внутри оболочки MySQL создайте базу и (при необходимости) пользователя:
    ```sql
    CREATE DATABASE IF NOT EXISTS restornew CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-   CREATE USER IF NOT EXISTS 'restornew'@'%' IDENTIFIED BY 'restornew-password';
-   GRANT ALL PRIVILEGES ON restornew.* TO 'restornew'@'%';
+   CREATE USER IF NOT EXISTS 'restornew'@'localhost' IDENTIFIED BY 'restornew-password';
+   GRANT ALL PRIVILEGES ON restornew.* TO 'restornew'@'localhost';
    FLUSH PRIVILEGES;
    ```
    Если нужен вход под `root` с паролем, выполните `ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'your-password';` и затем выходите командой `exit;`.
+   > ℹ️ **Важно.** Все дальнейшие команды используют логин `restornew` и пароль `restornew-password`. Замените их на свои значения и обязательно укажите те же данные в `.env`, иначе получите ошибку `Access denied for user 'user'@'localhost'` при миграции или сидировании.
 2. Клонируйте репозиторий и установите зависимости:
    ```bash
    cd backend && npm install
@@ -46,10 +47,10 @@ mobile/   — Expo-приложение (iOS, Android, Web) для клиент�
 3. Скопируйте `.env.example` в `.env` в каждом пакете и пропишите значения:
    - `backend/.env`
      ```env
-   DATABASE_URL=mysql://restornew:restornew-password@127.0.0.1:3306/restornew
-    ADMIN_SECRET=super-secret
-    PORT=3000
-    ```
+     DATABASE_URL=mysql://restornew:restornew-password@127.0.0.1:3306/restornew
+     ADMIN_SECRET=super-secret
+     PORT=3000
+     ```
    - `mobile/.env`
      ```env
      EXPO_PUBLIC_API_URL=http://185.207.0.192:3000/trpc
@@ -89,7 +90,8 @@ Expo Dev Tools предложит открыть приложение в iOS/And
    npm run db:seed
    npm run build
    ```
-   Если при `npm install` появится ошибка доступа к registry, повторите команду позже или используйте зеркало npm (например, `registry=https://registry.npmmirror.com` в файле `.npmrc`).
+   После редактирования `.env` убедитесь, что строка `DATABASE_URL=` содержит **реальные** логин, пароль и хост вашей базы, иначе появится ошибка `Access denied for user ...` при миграциях. Значения пишутся без кавычек.
+   Если при `npm install` появляется ошибка доступа к registry, повторите команду позже или временно переключитесь на зеркало npm (например, добавьте строку `registry=https://registry.npmmirror.com` в `/var/www/html/.npmrc`).
 
 2. **Запустите backend как systemd-сервис**, чтобы он работал в фоне и перезапускался автоматически.
    ```bash
@@ -115,6 +117,7 @@ Expo Dev Tools предложит открыть приложение в iOS/And
    sudo systemctl status restornew.service
    ```
    Убедитесь, что в статусе нет ошибок и строка `API running on http://localhost:3000` присутствует в логе (`journalctl -u restornew.service -f`).
+   При изменении `.env` после запуска сервиса не забудьте выполнить `sudo systemctl restart restornew.service`, чтобы подтянуть новые значения. Если хотите запустить API в режиме разработки (`npm run dev`), предварительно остановите сервис: `sudo systemctl stop restornew.service` — иначе получите ошибку `EADDRINUSE` на порту 3000.
 
 3. **Проверьте API локально на сервере.**
    ```bash
