@@ -33,17 +33,17 @@ Backend должен лежать в `/var/www/html/backend`. Если папк�
    mysql
    ```
    ```sql
-   CREATE DATABASE IF NOT EXISTS restornew CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-   CREATE USER IF NOT EXISTS 'restornew'@'localhost' IDENTIFIED BY 'restornew-password';
-   GRANT ALL PRIVILEGES ON restornew.* TO 'restornew'@'localhost';
+   CREATE DATABASE IF NOT EXISTS restornew_app CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   CREATE USER IF NOT EXISTS 'restornew_app'@'localhost' IDENTIFIED BY 'i*2ubUF7LOaG';
+   GRANT ALL PRIVILEGES ON restornew_app.* TO 'restornew_app'@'localhost';
    FLUSH PRIVILEGES;
    ```
-   Замените пароль на свой и запишите его — он понадобится в `.env`.
+   Пароль должен быть `i*2ubUF7LOaG` — он используется во всех шаблонах `.env`.
 3. Проверьте вход от нового пользователя:
    ```bash
-   mysql -u restornew -p -e "SHOW DATABASES;"
+   mysql -u restornew_app -p'i*2ubUF7LOaG' -e "SHOW DATABASES;"
    ```
-   Вывод должен содержать `restornew`.
+   Вывод должен содержать `restornew_app`.
 
 ## Шаг 3. Создать и проверить `.env`
 
@@ -55,12 +55,12 @@ nano .env
 
 Минимальный набор переменных:
 ```env
-DATABASE_URL=mysql://restornew:restornew-password@127.0.0.1:3306/restornew
+DATABASE_URL=mysql://restornew_app:i*2ubUF7LOaG@127.0.0.1:3306/restornew_app
 ADMIN_SECRET=super-secret
 PORT=3000
 ```
 
-- `DATABASE_URL` — замените логин/пароль на свои.
+- `DATABASE_URL` — логин, пароль и база должны совпадать с созданными ранее значениями.
 - `ADMIN_SECRET` — строка для заголовка `x-admin-secret`.
 - `PORT` — порт API. Если меняете, не забудьте обновить proxy-конфиг и переменные мобильного клиента.
 
@@ -78,7 +78,7 @@ npm run build
 
 Советы по устранению ошибок:
 - **`npm error ETARGET`** — временно укажите зеркало npm: `echo "registry=https://registry.npmmirror.com" > ~/.npmrc`, повторите `npm install`, затем удалите `.npmrc`.
-- **`Access denied for user 'restornew'@'localhost'`** — перепроверьте пароль в `.env` и права пользователя в MySQL (`GRANT ALL PRIVILEGES`).
+- **`Access denied for user 'restornew_app'@'localhost'`** — перепроверьте пароль в `.env` и права пользователя в MySQL (`GRANT ALL PRIVILEGES`).
 - **`DrizzleError ... specify "mode"`** — убедитесь, что используете актуальную версию репозитория (в `src/db/index.ts` параметр `mode: "default"`).
 
 После `npm run build` должна появиться папка `dist/`.

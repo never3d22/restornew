@@ -41,7 +41,7 @@ mobile/   — Expo-приложение (iOS, Android, Web) для клиент�
 ## Чек-лист быстрого запуска
 
 1. **Клонировать репозиторий:** `git clone ... && cd restornew`.
-2. **Подготовить MySQL:** создать базу `restornew` и пользователя.
+2. **Подготовить MySQL:** создать базу `restornew_app` и пользователя `restornew_app` с паролем `i*2ubUF7LOaG` (через Docker или системный MySQL).
 3. **Заполнить `.env` в `backend/` и `mobile/`.**
 4. **Установить зависимости:** `npm install` в обоих пакетах.
 5. **Применить миграции и сиды:** `npm run db:push && npm run db:seed`.
@@ -71,22 +71,27 @@ mobile/   — Expo-приложение (iOS, Android, Web) для клиент�
    ```
    В интерактивной консоли выполните:
    ```sql
-   CREATE DATABASE IF NOT EXISTS restornew CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-   CREATE USER IF NOT EXISTS 'restornew'@'localhost' IDENTIFIED BY 'restornew-password';
-   GRANT ALL PRIVILEGES ON restornew.* TO 'restornew'@'localhost';
+   CREATE DATABASE IF NOT EXISTS restornew_app CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   CREATE USER IF NOT EXISTS 'restornew_app'@'localhost' IDENTIFIED BY 'i*2ubUF7LOaG';
+   GRANT ALL PRIVILEGES ON restornew_app.* TO 'restornew_app'@'localhost';
    FLUSH PRIVILEGES;
    ```
-   Замените `restornew-password` на свой пароль. Выйдите командой `exit;`.
+   Пароль должен быть `i*2ubUF7LOaG`, чтобы совпадать с конфигурацией проекта. Выйдите командой `exit;`.
 4. **Проверьте вход от нового пользователя:**
    ```bash
-   mysql -u restornew -p -e "SHOW DATABASES;"
+   mysql -u restornew_app -p'i*2ubUF7LOaG' -e "SHOW DATABASES;"
    ```
-   Если видите `restornew` — доступ настроен. При ошибке `Access denied` перепроверьте пароль и хост в `CREATE USER`.
+   Если видите `restornew_app` — доступ настроен. При ошибке `Access denied` перепроверьте пароль и хост в `CREATE USER`.
 5. **(Опционально) Разрешите root-вход по паролю:**
    ```sql
    ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'your-strong-password';
    ```
    Этот шаг пригодится, если хотите подключаться внешними инструментами.
+6. **Альтернатива для локальной разработки — Docker Compose:**
+   ```bash
+   docker compose up -d
+   ```
+   Файл `docker-compose.yml` поднимет MySQL 8.0 с теми же базой и пользователем (`restornew_app` / `i*2ubUF7LOaG`). После первого запуска проверьте доступ командой `mysql -h 127.0.0.1 -u restornew_app -p'i*2ubUF7LOaG' -e "SHOW DATABASES;"`.
 
 ## Настройка backend
 
@@ -99,7 +104,7 @@ mobile/   — Expo-приложение (iOS, Android, Web) для клиент�
    ```
    Откройте файл (`nano .env`) и задайте переменные:
    ```env
-   DATABASE_URL=mysql://restornew:restornew-password@127.0.0.1:3306/restornew
+   DATABASE_URL=mysql://restornew_app:i*2ubUF7LOaG@127.0.0.1:3306/restornew_app
    ADMIN_SECRET=super-secret
    PORT=3000
    ```
@@ -164,7 +169,7 @@ mobile/   — Expo-приложение (iOS, Android, Web) для клиент�
    npm run db:seed
    npm run build
    ```
-   - В `DATABASE_URL` укажите созданного пользователя MySQL (`mysql://restornew:пароль@127.0.0.1:3306/restornew`).
+   - В `DATABASE_URL` укажите созданного пользователя MySQL (`mysql://restornew_app:i*2ubUF7LOaG@127.0.0.1:3306/restornew_app`).
    - При ошибках npm используйте зеркало (`/var/www/html/.npmrc`) и повторите установку.
    - Если миграции падают с `Access denied`, вернитесь к разделу MySQL, обновите пользователя и пароль.
 2. **Создайте systemd-сервис, чтобы API работало в фоне:**

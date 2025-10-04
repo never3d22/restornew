@@ -8,6 +8,8 @@ export default defineConfig({
   out: "./drizzle",
   dialect: "mysql2",
   dbCredentials: {
-    url: process.env.DATABASE_URL ?? "mysql://user:password@localhost:3306/restornew"
+    url:
+      process.env.DATABASE_URL ??
+      "mysql://restornew_app:i*2ubUF7LOaG@127.0.0.1:3306/restornew_app"
   }
 });
