@@ -77,3 +77,8 @@ if (isMain) {
 }
 
 export type { AppRouter } from "./trpc/router";
+export type {
+  RouterInputs,
+  RouterOutputs,
+  RouterClientError
+} from "./trpc/types";

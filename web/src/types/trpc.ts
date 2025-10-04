@@ -1,7 +1,9 @@
-import type { TRPCClientErrorLike } from "@trpc/client";
-import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
-import type { AppRouter } from "@backend/index";
+import type {
+  RouterInputs as BackendRouterInputs,
+  RouterOutputs as BackendRouterOutputs,
+  RouterClientError
+} from "@backend/trpc/types";
 
-export type RouterInputs = inferRouterInputs<AppRouter>;
-export type RouterOutputs = inferRouterOutputs<AppRouter>;
-export type TrpcClientError = TRPCClientErrorLike<AppRouter>;
+export type RouterInputs = BackendRouterInputs;
+export type RouterOutputs = BackendRouterOutputs;
+export type TrpcClientError = RouterClientError;
