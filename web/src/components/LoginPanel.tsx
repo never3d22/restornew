@@ -1,6 +1,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { trpc } from "@/api/trpc";
 import { useAuthStore } from "@/store/auth";
+import type { RouterOutputs, TrpcClientError } from "@/types/trpc";
 
 export function LoginPanel() {
   const { customerId, phone, codeSent, setPhone, setCustomer, setCodeSent, reset } =
@@ -16,21 +17,21 @@ export function LoginPanel() {
       setMessage("Код отправлен. Введите 1234 для тестового входа.");
       setError(null);
     },
-    onError: (mutationError) => {
+    onError: (mutationError: TrpcClientError) => {
       setError(mutationError.message);
       setMessage(null);
     }
   });
 
   const verifyCode = trpc.auth.verifyCode.useMutation({
-    onSuccess: ({ customerId: id }) => {
+    onSuccess: ({ customerId: id }: RouterOutputs["auth"]["verifyCode"]) => {
       setCustomer(id);
       setCodeSent(false);
       setMessage("Вы вошли в систему");
       setError(null);
       setCode("");
     },
-    onError: (mutationError) => {
+    onError: (mutationError: TrpcClientError) => {
       setError(mutationError.message);
       setMessage(null);
     }

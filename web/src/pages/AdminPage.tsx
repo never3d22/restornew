@@ -1,6 +1,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { trpc } from "@/api/trpc";
 import { useAdminStore } from "@/store/admin";
+import type { RouterOutputs, TrpcClientError } from "@/types/trpc";
 
 type OrderStatus = "pending" | "confirmed" | "delivered" | "cancelled";
 
@@ -56,7 +57,7 @@ export function AdminPage() {
       setErrorMessage(null);
       menuQuery.refetch();
     },
-    onError: (mutationError) => {
+    onError: (mutationError: TrpcClientError) => {
       setErrorMessage(mutationError.message);
       setStatusMessage(null);
     }
@@ -69,7 +70,7 @@ export function AdminPage() {
       setErrorMessage(null);
       menuQuery.refetch();
     },
-    onError: (mutationError) => {
+    onError: (mutationError: TrpcClientError) => {
       setErrorMessage(mutationError.message);
       setStatusMessage(null);
     }
@@ -81,13 +82,20 @@ export function AdminPage() {
       setStatusMessage("Статус заказа обновлён");
       setErrorMessage(null);
     },
-    onError: (mutationError) => {
+    onError: (mutationError: TrpcClientError) => {
       setErrorMessage(mutationError.message);
       setStatusMessage(null);
     }
   });
 
-  const categoryOptions = useMemo(() => menuQuery.data?.map((category) => ({ value: category.id, label: category.name })) ?? [], [menuQuery.data]);
+  const categoryOptions = useMemo(
+    () =>
+      (menuQuery.data ?? []).map((category: RouterOutputs["menu"]["list"][number]) => ({
+        value: category.id,
+        label: category.name
+      })),
+    [menuQuery.data]
+  );
 
   const handleCategorySubmit = (event: FormEvent) => {
     event.preventDefault();
@@ -223,7 +231,7 @@ export function AdminPage() {
           <p style={{ color: "#dc2626" }}>{ordersQuery.error.message}</p>
         ) : null}
         <div className="grid">
-          {ordersQuery.data?.map((order) => (
+          {ordersQuery.data?.map((order: RouterOutputs["admin"]["orders"][number]) => (
             <article key={order.id} className="card" style={{ padding: 20 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <h3 style={{ margin: 0 }}>Заказ №{order.id}</h3>
@@ -252,7 +260,7 @@ export function AdminPage() {
                   : "Самовывоз"}
               </p>
               <ul style={{ margin: "12px 0 0", paddingLeft: 18 }}>
-                {order.items.map((item) => (
+                {order.items.map((item: RouterOutputs["admin"]["orders"][number]["items"][number]) => (
                   <li key={item.id}>
                     {item.dish?.name ?? "Блюдо удалено"} — {item.quantity} × {Number(item.price).toFixed(2)} ₽
                   </li>

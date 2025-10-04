@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { trpc } from "@/api/trpc";
 import { useCartStore } from "@/store/cart";
 import { useAuthStore } from "@/store/auth";
+import type { RouterOutputs, TrpcClientError } from "@/types/trpc";
 
 export function CartPage() {
   const items = useCartStore((state) => state.items);
@@ -25,12 +26,12 @@ export function CartPage() {
   });
 
   const createOrder = trpc.orders.create.useMutation({
-    onSuccess: ({ orderId }) => {
+    onSuccess: ({ orderId }: RouterOutputs["orders"]["create"]) => {
       setStatus(`Заказ №${orderId} оформлен`);
       setError(null);
       clear();
     },
-    onError: (mutationError) => {
+    onError: (mutationError: TrpcClientError) => {
       setError(mutationError.message);
       setStatus(null);
     }
@@ -106,7 +107,7 @@ export function CartPage() {
               }}
             >
               <option value="pickup">Самовывоз / без адреса</option>
-              {addressesQuery.data?.map((address) => (
+              {addressesQuery.data?.map((address: RouterOutputs["addresses"]["list"][number]) => (
                 <option key={address.id} value={address.id}>
                   {address.label} — {address.city}, {address.street}
                 </option>

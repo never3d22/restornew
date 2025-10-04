@@ -1,6 +1,7 @@
 import { FormEvent, useState } from "react";
 import { trpc } from "@/api/trpc";
 import { useAuthStore } from "@/store/auth";
+import type { RouterOutputs, TrpcClientError } from "@/types/trpc";
 
 const initialForm = {
   label: "",
@@ -30,7 +31,7 @@ export function AddressesPage() {
       setError(null);
       addressesQuery.refetch();
     },
-    onError: (mutationError) => {
+    onError: (mutationError: TrpcClientError) => {
       setError(mutationError.message);
       setStatus(null);
     }
@@ -106,7 +107,7 @@ export function AddressesPage() {
           <p>Адресов пока нет.</p>
         ) : null}
         <div className="grid">
-          {addressesQuery.data?.map((address) => (
+          {addressesQuery.data?.map((address: RouterOutputs["addresses"]["list"][number]) => (
             <article key={address.id} className="card" style={{ padding: 20 }}>
               <h3 style={{ marginTop: 0 }}>{address.label}</h3>
               <p style={{ margin: "4px 0", color: "#475569" }}>

@@ -1,7 +1,7 @@
 import { createTRPCReact } from "@trpc/react-query";
 import { httpBatchLink } from "@trpc/client";
 import SuperJSON from "superjson";
-import type { AppRouter } from "../../backend/src/trpc/router";
+import type { AppRouter } from "@backend/index";
 import { useAuthStore } from "@/store/auth";
 import { useAdminStore } from "@/store/admin";
 

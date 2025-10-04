@@ -1,17 +1,22 @@
 import { useMemo } from "react";
 import { trpc } from "@/api/trpc";
 import { useCartStore } from "@/store/cart";
+import type { RouterOutputs } from "@/types/trpc";
 
 export function MenuPage() {
   const { data, isLoading, isError, refetch, error } = trpc.menu.list.useQuery();
   const addItem = useCartStore((state) => state.addItem);
 
-  const dishes = useMemo(() => {
+  type MenuCategory = RouterOutputs["menu"]["list"][number];
+  type MenuDish = MenuCategory["dishes"][number];
+  type DisplayDish = MenuDish & { categoryName: string };
+
+  const dishes = useMemo<DisplayDish[]>(() => {
     if (!data) return [];
-    return data.flatMap((category) =>
+    return data.flatMap((category: MenuCategory) =>
       category.dishes
-        .filter((dish) => dish.isAvailable)
-        .map((dish) => ({
+        .filter((dish: MenuDish) => dish.isAvailable)
+        .map((dish: MenuDish) => ({
           ...dish,
           categoryName: category.name
         }))
