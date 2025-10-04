@@ -1,5 +1,7 @@
-import "dotenv/config";
+import { loadEnv } from "./shared/loadEnv";
 import { z } from "zod";
+
+loadEnv();
 
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
