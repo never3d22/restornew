@@ -3,9 +3,9 @@ import {
   varchar,
   text,
   int,
-  datetime,
   boolean,
-  decimal
+  decimal,
+  timestamp
 } from "drizzle-orm/mysql-core";
 import { relations } from "drizzle-orm";
 
@@ -48,8 +48,8 @@ export const orders = mysqlTable("orders", {
   addressId: int("address_id").references(() => addresses.id),
   status: varchar("status", { length: 32 }).notNull().default("pending"),
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
-  createdAt: datetime("created_at").notNull().defaultNow(),
-  updatedAt: datetime("updated_at").notNull().defaultNow()
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow()
 });
 
 export const orderItems = mysqlTable("order_items", {

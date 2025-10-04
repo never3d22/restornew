@@ -75,12 +75,110 @@ mobile/   — Expo-приложение (iOS, Android, Web) для клиент�
    ```
 Expo Dev Tools предложит открыть приложение в iOS/Android симуляторе, на устройстве или в веб-браузере.
 
-## Доступ через браузер
+## Публикация API в браузере (`https://roteelonoogu.beget.app`)
 
-- После запуска backend на сервере страница состояния доступна по адресу `http://roteelonoogu.beget.app:3000/` (или с вашим доменом/портом). Она выводит статус API и подсказки по конфигурации.
-- Проверка здоровья доступна по `http://roteelonoogu.beget.app:3000/health`.
-- tRPC-эндпоинт расположен на `http://roteelonoogu.beget.app:3000/trpc`. Для работы через браузер используйте devtools (например, [tRPC Panel](https://github.com/jlalmes/trpc-panel)) или собственный клиент.
-- Мобильное приложение должно ссылаться на тот же URL через переменную `EXPO_PUBLIC_API_URL`.
+Ниже — чек-лист, который можно выполнять по порядку, чтобы backend был доступен по вашей ссылке от beget.com. Все команды выполняются на сервере после входа по SSH.
+
+1. **Подготовьте приложение.**
+   ```bash
+   cd /var/www/html/backend
+   cp .env.example .env # если файл ещё не создан
+   nano .env            # укажите DATABASE_URL, ADMIN_SECRET и PORT=3000
+   npm install          # устанавливаем prod+dev зависимости, чтобы был доступен tsup/tsx
+   npm run db:push
+   npm run db:seed
+   npm run build
+   ```
+   Если при `npm install` появится ошибка доступа к registry, повторите команду позже или используйте зеркало npm (например, `registry=https://registry.npmmirror.com` в файле `.npmrc`).
+
+2. **Запустите backend как systemd-сервис**, чтобы он работал в фоне и перезапускался автоматически.
+   ```bash
+   sudo tee /etc/systemd/system/restornew.service >/dev/null <<'EOF'
+   [Unit]
+   Description=RestorNew API
+   After=network.target
+
+   [Service]
+   Type=simple
+   WorkingDirectory=/var/www/html/backend
+   ExecStart=/usr/bin/node --enable-source-maps /var/www/html/backend/dist/index.js
+   Restart=always
+   RestartSec=5
+   EnvironmentFile=/var/www/html/backend/.env
+
+   [Install]
+   WantedBy=multi-user.target
+   EOF
+
+   sudo systemctl daemon-reload
+   sudo systemctl enable --now restornew.service
+   sudo systemctl status restornew.service
+   ```
+   Убедитесь, что в статусе нет ошибок и строка `API running on http://localhost:3000` присутствует в логе (`journalctl -u restornew.service -f`).
+
+3. **Проверьте API локально на сервере.**
+   ```bash
+   curl http://127.0.0.1:3000/health
+   curl http://127.0.0.1:3000/
+   ```
+   В ответе `/` должно прийти HTML с подсказками.
+
+4. **Откройте нужные порты в фаерволе (если включен UFW).**
+   ```bash
+   sudo ufw allow 80
+   sudo ufw allow 443
+   sudo ufw allow 3000    # нужен только если хотите доступ напрямую без прокси
+   sudo ufw status
+   ```
+
+5. **Установите и настройте Nginx как reverse-proxy для домена `roteelonoogu.beget.app`.**
+   ```bash
+   sudo apt update
+   sudo apt install nginx -y
+
+   sudo tee /etc/nginx/sites-available/roteelonoogu.beget.app >/dev/null <<'EOF'
+   server {
+     listen 80;
+     server_name roteelonoogu.beget.app;
+
+     location / {
+       proxy_pass http://127.0.0.1:3000;
+       proxy_http_version 1.1;
+       proxy_set_header Host $host;
+       proxy_set_header X-Real-IP $remote_addr;
+       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+       proxy_set_header X-Forwarded-Proto $scheme;
+     }
+   }
+   EOF
+
+   sudo ln -sf /etc/nginx/sites-available/roteelonoogu.beget.app /etc/nginx/sites-enabled/roteelonoogu.beget.app
+   sudo nginx -t
+   sudo systemctl reload nginx
+   ```
+   Теперь прокси будет перенаправлять HTTP-запросы с домена на backend. Для HTTPS настройте Let’s Encrypt (см. пункт ниже).
+
+6. **(Опционально) Выпустите SSL-сертификат Let's Encrypt.**
+   ```bash
+   sudo apt install certbot python3-certbot-nginx -y
+   sudo certbot --nginx -d roteelonoogu.beget.app
+   ```
+   Certbot автоматически обновит конфигурацию Nginx и настроит переадресацию HTTP→HTTPS.
+
+7. **Проверьте доступность из браузера.**
+   - Откройте `https://roteelonoogu.beget.app` — должна появиться HTML-страница статуса API.
+   - `https://roteelonoogu.beget.app/health` вернёт текст `healthy`.
+   - tRPC клиентам (включая Expo-приложение) используйте `https://roteelonoogu.beget.app/trpc`.
+
+8. **Обновите мобильное приложение.**
+   В `mobile/.env` пропишите публичный URL:
+   ```env
+   EXPO_PUBLIC_API_URL=https://roteelonoogu.beget.app/trpc
+   EXPO_PUBLIC_ADMIN_SECRET=super-secret
+   ```
+   После этого перезапустите Expo (`npm run start`).
+
+Если домен обслуживается не Nginx, адаптируйте шаг 5 под используемый веб-сервер (Apache, Caddy и т.д.), главное — пробросить запросы с 80/443 порта на 3000.
 
 ## Основные эндпоинты tRPC
 
