@@ -26,13 +26,13 @@ mobile/   — Expo-приложение (iOS, Android, Web) для клиент�
 
 ## Настройка окружения
 
-1. Создайте базу данных MySQL. На продакшн-сервере можно подключиться к хосту `185.207.0.192` под пользователем `root` (пароль `i*2ubUF7LOaG`) и выполнить:
+1. Создайте базу данных MySQL. Подключитесь по SSH на сервер (`ssh root@185.207.0.192`) и уже **на самом сервере** выполните команды ниже. Внешние подключения к MySQL закрыты, поэтому используйте `localhost`:
    ```bash
-   mysql -h 185.207.0.192 -u root -p'i*2ubUF7LOaG' -e "CREATE DATABASE IF NOT EXISTS restornew CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+   mysql -h 127.0.0.1 -u root -p'i*2ubUF7LOaG' -e "CREATE DATABASE IF NOT EXISTS restornew CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
    ```
    При необходимости создайте отдельного пользователя:
    ```bash
-   mysql -h 185.207.0.192 -u root -p'i*2ubUF7LOaG' \
+   mysql -h 127.0.0.1 -u root -p'i*2ubUF7LOaG' \
      -e "CREATE USER IF NOT EXISTS 'restornew'@'%' IDENTIFIED BY 'restornew-password';
          GRANT ALL PRIVILEGES ON restornew.* TO 'restornew'@'%';
          FLUSH PRIVILEGES;"
@@ -45,7 +45,7 @@ mobile/   — Expo-приложение (iOS, Android, Web) для клиент�
 3. Скопируйте `.env.example` в `.env` в каждом пакете и пропишите значения:
    - `backend/.env`
      ```env
-     DATABASE_URL=mysql://restornew:restornew-password@185.207.0.192:3306/restornew
+    DATABASE_URL=mysql://restornew:restornew-password@127.0.0.1:3306/restornew
      ADMIN_SECRET=super-secret
      ```
    - `mobile/.env`
