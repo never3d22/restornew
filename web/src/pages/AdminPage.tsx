@@ -12,6 +12,8 @@ const statusLabels: Record<OrderStatus, string> = {
   cancelled: "Отменён"
 };
 
+type CategoryOption = { value: number; label: string };
+
 type CategoryForm = {
   name: string;
   description: string;
@@ -88,14 +90,12 @@ export function AdminPage() {
     }
   });
 
-  const categoryOptions = useMemo(
-    () =>
-      (menuQuery.data ?? []).map((category: RouterOutputs["menu"]["list"][number]) => ({
-        value: category.id,
-        label: category.name
-      })),
-    [menuQuery.data]
-  );
+  const categoryOptions = useMemo<CategoryOption[]>(() => {
+    return (menuQuery.data ?? []).map((category: RouterOutputs["menu"]["list"][number]) => ({
+      value: category.id,
+      label: category.name
+    }));
+  }, [menuQuery.data]);
 
   const handleCategorySubmit = (event: FormEvent) => {
     event.preventDefault();

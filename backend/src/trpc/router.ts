@@ -15,10 +15,17 @@ import {
   orderItems
 } from "../db";
 
-type InsertResult = { insertId?: number | bigint | string };
+type InsertLike = { insertId?: number | bigint | string | null | undefined };
 
-const getInsertId = (result: InsertResult | null | undefined) => {
-  const value = result?.insertId;
+const hasInsertId = (value: unknown): value is InsertLike =>
+  typeof value === "object" && value !== null && "insertId" in value;
+
+const getInsertId = (result: unknown): number => {
+  if (!hasInsertId(result)) {
+    return 0;
+  }
+
+  const value = result.insertId;
   if (typeof value === "bigint") {
     return Number(value);
   }
@@ -75,10 +82,10 @@ export const appRouter = router({
           return { customerId: existing[0].id };
         }
 
-        const result = (await ctx.db
+        const result = await ctx.db
           .insert(customers)
           .values({ phone: input.phone })
-          .execute()) as InsertResult;
+          .execute();
 
         const customerId = getInsertId(result);
         return { customerId };
@@ -102,13 +109,13 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const result = (await ctx.db
+        const result = await ctx.db
           .insert(addresses)
           .values({
             customerId: ctx.customerId!,
             ...input
           })
-          .execute()) as InsertResult;
+          .execute();
 
         return { id: getInsertId(result), ...input };
       })
@@ -187,7 +194,7 @@ export const appRouter = router({
             }
           }
 
-          const orderResult = (await tx
+          const orderResult = await tx
             .insert(orders)
             .values({
               customerId: ctx.customerId!,
@@ -195,7 +202,7 @@ export const appRouter = router({
               total: total.toFixed(2),
               status: "pending"
             })
-            .execute()) as InsertResult;
+            .execute();
 
           const createdOrderId = getInsertId(orderResult);
 
