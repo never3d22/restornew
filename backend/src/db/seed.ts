@@ -1,5 +1,5 @@
 import { createDb } from "./index";
-import { categories, dishes } from "./schema";
+import { addresses, categories, dishes, orderItems, orders } from "./schema";
 
 const seedCategories = [
   { name: "Супы", description: "Горячие блюда" },
@@ -33,6 +33,9 @@ const seedDishes = [
 
 async function seed() {
   const db = await createDb();
+  await db.delete(orderItems).execute();
+  await db.delete(orders).execute();
+  await db.delete(addresses).execute();
   await db.delete(dishes).execute();
   await db.delete(categories).execute();
 
