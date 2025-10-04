@@ -26,17 +26,18 @@ mobile/   — Expo-приложение (iOS, Android, Web) для клиент�
 
 ## Настройка окружения
 
-1. Создайте базу данных MySQL. Подключитесь по SSH на сервер (`ssh root@185.207.0.192`) и уже **на самом сервере** выполните команды ниже. Внешние подключения к MySQL закрыты, поэтому используйте `localhost`:
+1. Создайте базу данных MySQL. Подключитесь по SSH на сервер (`ssh root@185.207.0.192`) и уже **на самом сервере** выполните команды ниже. Внешние подключения к MySQL закрыты, поэтому используйте `localhost`. На хостинге root по умолчанию авторизуется через `unix_socket`, поэтому сначала откройте интерактивную консоль без пароля:
    ```bash
-   mysql -h 127.0.0.1 -u root -p'i*2ubUF7LOaG' -e "CREATE DATABASE IF NOT EXISTS restornew CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+   sudo mysql
    ```
-   При необходимости создайте отдельного пользователя:
-   ```bash
-   mysql -h 127.0.0.1 -u root -p'i*2ubUF7LOaG' \
-     -e "CREATE USER IF NOT EXISTS 'restornew'@'%' IDENTIFIED BY 'restornew-password';
-         GRANT ALL PRIVILEGES ON restornew.* TO 'restornew'@'%';
-         FLUSH PRIVILEGES;"
+   Внутри оболочки MySQL создайте базу и (при необходимости) пользователя:
+   ```sql
+   CREATE DATABASE IF NOT EXISTS restornew CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   CREATE USER IF NOT EXISTS 'restornew'@'%' IDENTIFIED BY 'restornew-password';
+   GRANT ALL PRIVILEGES ON restornew.* TO 'restornew'@'%';
+   FLUSH PRIVILEGES;
    ```
+   Если нужен вход под `root` с паролем, выполните `ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'your-password';` и затем выходите командой `exit;`.
 2. Клонируйте репозиторий и установите зависимости:
    ```bash
    cd backend && npm install
