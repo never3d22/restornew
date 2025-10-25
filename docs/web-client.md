@@ -1,24 +1,19 @@
 # Веб-клиент RestorNew (React + Vite)
 
-Руководство поможет запустить и опубликовать браузерную версию RestorNew. Она использует те же tRPC-эндпоинты, что и мобильное приложение, поэтому backend должен быть доступен по HTTPS (например, `https://roteelonoogu.beget.app/trpc`).
+Фронтенд переведён в режим онлайн-кинотеатра и теперь работает поверх публичного API Videobalancer (`https://api.apbugall.org`). Backend проекта не требуется: каталог фильмов, карточки и iframe-плеер загружаются непосредственно по API.
 
 ## 1. Локальная разработка
 
-1. Перейдите в каталог `web/` и создайте `.env`:
+1. Перейдите в каталог `web/` и установите зависимости:
    ```bash
    cd web
-   cp .env.example .env
-   ```
-2. Укажите адрес API в `.env` (локально можно использовать `http://127.0.0.1:3000/trpc`):
-   ```env
-   VITE_API_URL=http://127.0.0.1:3000/trpc
-   ```
-3. Установите зависимости и запустите Vite:
-   ```bash
    npm install
+   ```
+2. Запустите Vite в режиме разработки:
+   ```bash
    npm run dev -- --host 0.0.0.0 --port 5173
    ```
-4. Откройте `http://localhost:5173` (или `http://<IP>:5173`, если тестируете с телефона). В шапке есть блок авторизации по SMS и поле для ввода админ-секрета.
+3. Откройте `http://localhost:5173` (или `http://<IP>:5173`, если подключаетесь удалённо). В левой колонке появятся фильтры и результаты каталога, а справа — карточка выбранного фильма/сериала с плеером и выбором озвучек. При отсутствии доступных iframe используется тестовая заглушка (`https://api.apbugall.org/iframe/test`).
 
 ## 2. Сборка production-бандла
 
@@ -26,64 +21,52 @@
    ```bash
    npm run build
    ```
-   В каталоге `web/dist/` появятся статические файлы.
-2. Проверьте собранную версию локально:
+   Готовые статические файлы появятся в `web/dist/`.
+2. Проверьте production-сборку локально:
    ```bash
    npm run preview -- --host 0.0.0.0 --port 4173
    ```
    По умолчанию приложение будет доступно на `http://localhost:4173`.
 
-## 3. Публикация на сервере beget.com
+## 3. Публикация на сервере
 
-Ниже пример деплоя на том же сервере, где работает backend. Предполагается, что исходники лежат в `/var/www/html/restornew/web` и у вас уже настроен домен `roteelonoogu.beget.app` для API.
-
-1. Подготовьте `.env` и установите зависимости:
+1. Скопируйте содержимое `web/dist/` в директорию, которую раздаёт ваш веб-сервер (Nginx, Apache, Vercel, Netlify и т.д.). Пример для Nginx на Ubuntu:
    ```bash
-   cd /var/www/html/restornew/web
-   cp .env.example .env
-   nano .env               # VITE_API_URL=https://roteelonoogu.beget.app/trpc
-   npm install
-   npm run build
+   sudo mkdir -p /var/www/html/videobalancer-app
+   sudo cp -r dist/* /var/www/html/videobalancer-app/
    ```
-2. Скопируйте результат в директорию, откуда Nginx будет отдавать статику:
+2. Настройте виртуальный хост для статики:
    ```bash
-   mkdir -p /var/www/html/web-dist
-   cp -r dist/* /var/www/html/web-dist/
-   ```
-3. Создайте отдельный сервер или поддомен для фронтенда, чтобы не мешать API. Например, `app.roteelonoogu.beget.app`:
-   ```bash
-   sudo tee /etc/nginx/sites-available/app.roteelonoogu.beget.app >/dev/null <<'EOF'
+   sudo tee /etc/nginx/sites-available/cinema.example.com >/dev/null <<'NGINX'
    server {
      listen 80;
-     server_name app.roteelonoogu.beget.app;
+     server_name cinema.example.com;
 
-     root /var/www/html/web-dist;
+     root /var/www/html/videobalancer-app;
      index index.html;
 
      location / {
        try_files $uri /index.html;
      }
    }
-   EOF
+   NGINX
 
-   sudo ln -sf /etc/nginx/sites-available/app.roteelonoogu.beget.app /etc/nginx/sites-enabled/app.roteelonoogu.beget.app
+   sudo ln -sf /etc/nginx/sites-available/cinema.example.com /etc/nginx/sites-enabled/cinema.example.com
    sudo nginx -t
    sudo systemctl reload nginx
    ```
-   После этого фронтенд будет доступен по адресу `http://app.roteelonoogu.beget.app`. Подключите HTTPS через Certbot при необходимости.
-4. Если хотите обслуживать фронтенд с того же домена, что и API, настройте отдельный путь (например, `/app`) и используйте относительный `base` в Vite. В текущей конфигурации проще держать API на `roteelonoogu.beget.app`, а веб-клиент на поддомене.
+3. Подключите HTTPS через Certbot или используемый вами хостинг.
 
 ## 4. Обновление версии
 
 1. Обновите репозиторий (`git pull`).
-2. Повторите сборку: `npm install` (если нужны новые зависимости) и `npm run build`.
-3. Перекопируйте `dist/*` в `/var/www/html/web-dist/`.
-4. Перезапустите `npm run preview` (если используете его) или просто перезагрузите Nginx после обновления файлов.
+2. Повторно выполните `npm install` (если появились новые зависимости) и `npm run build`.
+3. Замените содержимое директории с продакшн-файлами свежей сборкой.
 
 ## 5. Проверка после деплоя
 
-- `curl -I https://app.roteelonoogu.beget.app` — должен возвращать `200 OK`.
-- Откройте фронтенд в браузере, авторизуйтесь и оформите тестовый заказ.
-- Проверьте, что запросы к tRPC уходят на `https://roteelonoogu.beget.app/trpc` (видно в DevTools → Network).
+- `curl -I https://cinema.example.com` — должен возвращать `200 OK`.
+- Откройте сайт в браузере и убедитесь, что каталог подгружается, а при выборе фильма появляется рабочий плеер.
+- Проследите в DevTools → Network, что запросы уходят на `https://api.apbugall.org` и возвращают статус `200`.
 
-> 💡 Админ-секрет нигде не хранится в коде — вводите его вручную при каждом входе. Если секрет меняется, обновите и мобильное приложение, и браузерную версию.
+> ℹ️ Ключ Videobalancer сохранён внутри `src/api/videobalancer.ts`. Чтобы сменить ключ, обновите константу `API_TOKEN` и соберите фронтенд заново.
